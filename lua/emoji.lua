@@ -2,7 +2,7 @@ require("base64")
 
 local function send_kgp_msg(control, payload)
 	local msg = string.format("\x1B_G%s;%s\x1B\\", control, payload)
-	print("Msg: " .. msg)
+	-- print("Msg: " .. msg)
 	io.write(msg)
 end
 
@@ -30,16 +30,16 @@ vim.api.nvim_create_autocmd({ "BufWritePost" }, {
 	callback = function(ev)
 		clear_imgs()
 		local matches = vim.fn.matchbufline(ev.buf, ":.\\+:", 1, "$")
-		print(vim.inspect(matches))
+		-- print(vim.inspect(matches))
 		vim.cmd('syntax match myConceal ":.\\+:" conceal')
 		for _, match in ipairs(matches) do
 			local text = match.text
 			if string.gmatch(text, "^drgn.*$") then
 				local path = "/home/jason/drgn_32/" .. string.sub(text, 2, #text - 1) .. ".png"
-				print(path .. " exists!")
+				-- print(path .. " exists!")
 				move_cursor(match.lnum, match.byteidx + 6) -- TODO: maybe not hardcode it
 				show_image(0, 0, path)
-				print("Image sent!")
+				-- print("Image sent!")
 			end
 		end
 	end,
