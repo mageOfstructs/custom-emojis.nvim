@@ -19,6 +19,11 @@ function show_image(lines, cols, path)
 	-- io.write(string.format("\x1B_Gi=32,f=100,t=f,a=T,r=1,C=1,V=%d,H=%d;%s\x1B\\", cols, lines, enc(path)))
 end
 
+local function is_bufpos_visible(win, lnum, col)
+	local sp = vim.fn.screenpos(win, lnum, col)
+	return not (sp.row == 0 and sp.col == 0 and sp.endcol == 0 and sp.curscol == 0)
+end
+
 -- vim.api.nvim_create_autocmd({ "BufEnter", "VimEnter" }, {
 -- 	callback = function(args)
 -- 		show_image(30, 3, "/home/jason/drgn_32/drgn_0_0_256.png")
@@ -26,7 +31,7 @@ end
 -- })
 
 -- :drgn_0_0_256:
-vim.api.nvim_create_autocmd({ "VimEnter", "BufWritePost" }, {
+vim.api.nvim_create_autocmd({ "VimEnter", "BufWritePost", "WinScrolled" }, {
 	callback = function(ev)
 		clear_imgs()
 		local matches = vim.fn.matchbufline(ev.buf, ":.\\+:", 1, "$")
@@ -34,10 +39,11 @@ vim.api.nvim_create_autocmd({ "VimEnter", "BufWritePost" }, {
 		vim.cmd('syntax match myConceal ":.\\+:" conceal')
 		for _, match in ipairs(matches) do
 			local text = match.text
-			if string.gmatch(text, "^drgn.*$") then
+			if is_bufpos_visible(0, match.lnum, match.byteidx) and string.gmatch(text, "^drgn.*$") then
 				local path = "/home/jason/drgn_32/" .. string.sub(text, 2, #text - 1) .. ".png"
 				-- print(path .. " exists!")
-				move_cursor(match.lnum, match.byteidx + 6) -- TODO: maybe not hardcode it
+				local abs_pos = vim.fn.screenpos(0, match.lnum, match.byteidx)
+				move_cursor(abs_pos.row, abs_pos.col)
 				show_image(0, 0, path)
 				-- print("Image sent!")
 			end
