@@ -5,6 +5,7 @@
 ## Requirements
 
 - `conceallevel` must be greater than or equal to 2
+- A terminal that implements the Kitty Graphics Protocol (e.g. kitty)
 - Note: only pngs are supported right now
 - The kitty graphics protocol currently doesn't support scaling down images, which means you'll have to do it yourself. Below is a BASH command that does this:
 
