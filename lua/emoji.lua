@@ -26,7 +26,7 @@ end
 -- })
 
 -- :drgn_0_0_256:
-vim.api.nvim_create_autocmd({ "BufWritePost" }, {
+vim.api.nvim_create_autocmd({ "VimEnter", "BufWritePost" }, {
 	callback = function(ev)
 		clear_imgs()
 		local matches = vim.fn.matchbufline(ev.buf, ":.\\+:", 1, "$")
