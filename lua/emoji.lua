@@ -16,19 +16,7 @@ end
 
 function show_image(lines, cols, path)
 	send_kgp_msg(string.format("f=100,t=f,a=T,r=1,C=1,Y=%d,X=%d", lines, cols), enc(path))
-	-- io.write(string.format("\x1B_Gi=32,f=100,t=f,a=T,r=1,C=1,V=%d,H=%d;%s\x1B\\", cols, lines, enc(path)))
 end
-
-local function is_bufpos_visible(win, lnum, col)
-	local sp = vim.fn.screenpos(win, lnum, col)
-	return not (sp.row == 0 and sp.col == 0 and sp.endcol == 0 and sp.curscol == 0)
-end
-
--- vim.api.nvim_create_autocmd({ "BufEnter", "VimEnter" }, {
--- 	callback = function(args)
--- 		show_image(30, 3, "/home/jason/drgn_32/drgn_0_0_256.png")
--- 	end,
--- })
 
 -- :drgn_0_0_256:
 
@@ -47,12 +35,13 @@ vim.api.nvim_create_autocmd(
 			end
 			clear_imgs()
 			vim.cmd(conceal_cmd)
-			vim.fn.bufload(ev.buf)
-			local matches = vim.fn.matchbufline(ev.buf, emoji_regex, 1, "$")
+			local first_line = vim.fn.winsaveview().topline
+			local matches =
+				vim.fn.matchbufline(ev.buf, emoji_regex, first_line, first_line + vim.api.nvim_win_get_height(0))
 			-- print(vim.inspect(matches))
 			for _, match in ipairs(matches) do
 				local text = match.text
-				if is_bufpos_visible(0, match.lnum, match.byteidx) and string.gmatch(text, "^drgn.*$") then
+				if string.gmatch(text, "^drgn.*$") then
 					local path = "/home/jason/drgn_32/" .. string.sub(text, 2, #text - 1) .. ".png"
 					-- print(path .. " exists!")
 					local abs_pos = vim.fn.screenpos(0, match.lnum, match.byteidx)
