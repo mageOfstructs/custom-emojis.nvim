@@ -31,24 +31,38 @@ end
 -- })
 
 -- :drgn_0_0_256:
-vim.api.nvim_create_autocmd({ "VimEnter", "BufWritePost", "WinScrolled" }, {
-	callback = function(ev)
-		clear_imgs()
-		local matches = vim.fn.matchbufline(ev.buf, ":.\\+:", 1, "$")
-		-- print(vim.inspect(matches))
-		vim.cmd('syntax match myConceal ":.\\+:" conceal')
-		for _, match in ipairs(matches) do
-			local text = match.text
-			if is_bufpos_visible(0, match.lnum, match.byteidx) and string.gmatch(text, "^drgn.*$") then
-				local path = "/home/jason/drgn_32/" .. string.sub(text, 2, #text - 1) .. ".png"
-				-- print(path .. " exists!")
-				local abs_pos = vim.fn.screenpos(0, match.lnum, match.byteidx)
-				move_cursor(abs_pos.row, abs_pos.col)
-				show_image(0, 0, path)
-				-- print("Image sent!")
+
+local emoji_regex = ":drgn_[a-zA-Z0-9_\\-]\\+:"
+local conceal_cmd = 'syntax match myConceal "' .. emoji_regex .. '" conceal'
+vim.api.nvim_create_autocmd(
+	{ "VimEnter", "BufWritePost", "WinScrolled" },
+	{ -- FIXME: stuff gets weird with WinScrolled; must be because we call move_cursor inside here
+		callback = function(ev)
+			-- print(vim.inspect(ev))
+			if ev.event == "WinScrolled" then
+				if vim.v.event.all.height ~= 0 or vim.v.event.all.width ~= 0 then
+					return
+				end
+				-- print(vim.inspect(vim.v.event))
 			end
-		end
-	end,
-})
+			clear_imgs()
+			vim.cmd(conceal_cmd)
+			vim.fn.bufload(ev.buf)
+			local matches = vim.fn.matchbufline(ev.buf, emoji_regex, 1, "$")
+			-- print(vim.inspect(matches))
+			for _, match in ipairs(matches) do
+				local text = match.text
+				if is_bufpos_visible(0, match.lnum, match.byteidx) and string.gmatch(text, "^drgn.*$") then
+					local path = "/home/jason/drgn_32/" .. string.sub(text, 2, #text - 1) .. ".png"
+					-- print(path .. " exists!")
+					local abs_pos = vim.fn.screenpos(0, match.lnum, match.byteidx)
+					move_cursor(abs_pos.row, abs_pos.col)
+					show_image(0, 0, path)
+					-- print("Image sent!")
+				end
+			end
+		end,
+	}
+)
 
 return {}
