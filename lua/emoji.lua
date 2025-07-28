@@ -1,6 +1,8 @@
 require("base64")
 
 M = {}
+local cur_img_id = 0
+local imgs_ids = {}
 
 local function send_kgp_msg(control, payload)
 	local msg = string.format("\x1B_G%s;%s\x1B\\", control, payload)
@@ -9,7 +11,13 @@ local function send_kgp_msg(control, payload)
 end
 
 local function clear_imgs()
+	imgs_ids = {}
+	cur_img_id = 0
 	send_kgp_msg("a=d", "")
+end
+
+local function delete_img(id)
+	send_kgp_msg(string.format("a=d,d=i,i=%d", id), "")
 end
 
 local function move_cursor(line, col)
@@ -23,7 +31,8 @@ local function restore_cursor()
 end
 
 function M.show_image(lines, cols, path)
-	send_kgp_msg(string.format("f=100,t=f,a=T,r=1,C=1,Y=%d,X=%d", lines, cols), enc(path))
+	send_kgp_msg(string.format("i=%d,q=2,f=100,t=f,a=T,r=1,C=1,Y=%d,X=%d", cur_img_id, lines, cols), enc(path))
+	cur_img_id = cur_img_id + 1
 end
 
 -- :drgn_0_0_256:
@@ -40,7 +49,10 @@ local function render_window(win_id, opts)
 		local text = match.text
 		if string.gmatch(text, "^drgn.*$") then
 			local path = opts.emoji_path .. string.sub(text, 2, #text - 1) .. ".png"
-			-- print(path .. " exists!")
+			if imgs_ids[win_id] == nil then
+				imgs_ids[win_id] = {}
+			end
+			imgs_ids[win_id][#imgs_ids[win_id] + 1] = cur_img_id
 			local abs_pos = vim.fn.screenpos(win_id, match.lnum, match.byteidx)
 			move_cursor(abs_pos.row, abs_pos.col)
 			M.show_image(0, 0, path)
@@ -86,6 +98,18 @@ function M.setup(opts)
 			extract_window_ids(windows, window_ids)
 			for i = 1, #window_ids do
 				render_window(window_ids[i], opts)
+			end
+		end,
+	})
+
+	vim.api.nvim_create_autocmd({ "QuitPre" }, {
+		callback = function(ev)
+			local win_id = vim.api.nvim_get_current_win()
+			if imgs_ids[win_id] == nil then
+				return
+			end
+			for i = 1, #imgs_ids[win_id] do
+				delete_img(imgs_ids[win_id][i])
 			end
 		end,
 	})
