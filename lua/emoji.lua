@@ -45,20 +45,27 @@ local function render_window(win_id, opts)
 	local first_line = vim.fn.winsaveview().topline
 	local matches =
 		vim.fn.matchbufline(buf_id, opts.emoji_regex, first_line, first_line + vim.api.nvim_win_get_height(0))
-	-- print(vim.inspect(matches))
+	local line_emojis_offsets = {}
 	for _, match in ipairs(matches) do
 		local text = match.text
 		if string.gmatch(text, "^drgn.*$") then
+			if line_emojis_offsets[match.lnum] == nil then
+				line_emojis_offsets[match.lnum] = 0
+			end
+
 			local path = opts.emoji_path .. string.sub(text, 2, #text - 1) .. ".png"
+
 			if imgs_ids[win_id] == nil then
 				imgs_ids[win_id] = {}
 			end
 			imgs_ids[win_id][#imgs_ids[win_id] + 1] = cur_img_id
-			local abs_pos = vim.fn.screenpos(win_id, match.lnum, match.byteidx)
+
+			local abs_pos = vim.fn.screenpos(win_id, match.lnum, match.byteidx - line_emojis_offsets[match.lnum])
 			move_cursor(abs_pos.row, abs_pos.col)
 			M.show_image(0, 0, path)
 			restore_cursor()
-			-- print("Image sent!")
+
+			line_emojis_offsets[match.lnum] = line_emojis_offsets[match.lnum] + #match.text
 		end
 	end
 end
