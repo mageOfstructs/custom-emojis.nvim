@@ -83,7 +83,7 @@ end
 
 function M.setup(opts)
 	if opts.emoji_path == nil then
-		opts.emoji_path = "/home/" .. os.getenv("USER") .. "/.local/share/emoji.nvim/"
+		opts.emoji_path = "/home/" .. os.getenv("USER") .. "/.local/share/custom-emojis.nvim/"
 	end
 	if opts.emoji_regex == nil then
 		opts.emoji_regex = ":\\(drgn\\|neofox\\|wvrn\\)_[a-zA-Z0-9_\\-]\\+:"

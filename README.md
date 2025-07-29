@@ -1,4 +1,4 @@
-# Emoji.nvim
+# custom-emojis.nvim
 
 - so you can put neofoxxos in your code :3
 
