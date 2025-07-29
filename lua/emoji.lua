@@ -31,6 +31,7 @@ local function restore_cursor()
 end
 
 function M.show_image(lines, cols, path)
+	print(path)
 	send_kgp_msg(string.format("i=%d,q=2,f=100,t=f,a=T,r=1,C=1,Y=%d,X=%d", cur_img_id, lines, cols), enc(path))
 	cur_img_id = cur_img_id + 1
 end
@@ -75,10 +76,10 @@ end
 
 function M.setup(opts)
 	if opts.emoji_path == nil then
-		opts.emoji_path = "/home/jason/drgn_32/"
+		opts.emoji_path = "/home/" .. os.getenv("USER") .. "/.local/share/emoji.nvim/"
 	end
 	if opts.emoji_regex == nil then
-		opts.emoji_regex = ":drgn_[a-zA-Z0-9_\\-]\\+:"
+		opts.emoji_regex = ":\\(drgn\\|neofox\\|wvrn\\)_[a-zA-Z0-9_\\-]\\+:"
 	end
 
 	vim.api.nvim_create_autocmd({ "VimEnter", "BufWritePost", "WinScrolled" }, {

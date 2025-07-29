@@ -1,13 +1,13 @@
 # Emoji.nvim
 
-- so neofox can watch you code :3
+- so you can put neofoxxos in your code :3
 
 ## Requirements
 
-- `conceallevel` must be greater than or equal to 2
 - A terminal that implements the Kitty Graphics Protocol (e.g. kitty)
+- `conceallevel` must be greater than or equal to 2
 - Note: only pngs are supported right now
-- The kitty graphics protocol currently doesn't support scaling down images, which means you'll have to do it yourself. Below is a BASH command that does this:
+- The kitty graphics protocol currently doesn't support scaling down images, which means you'll have to do it yourself. Below is a BASH command (requires imagemagick) that does this:
 
 ```sh
 mkdir -p drgn_32 && for img in drgn/*.png; do img="${img#*/}"; convert -resize 32X32 "drgn/$img" "drgn_32/$img"; done
@@ -22,9 +22,13 @@ This will create new 32x32 versions of all pngs in `drgn/` in the folder `drgn_3
 ```lua
 {
     "mageOfStructs/emoji.nvim",
- init = function()
-  require("emoji")
- end,
+    opts = {
+        -- Absolute Path to the folder containing the emojis, will be set to /home/$USER/.local/share/icons/emoji.nvim by default; no path expansions are supported right now
+        -- emoji_path = "",
+        
+        -- Vim Regex for the emoji shortcodes
+        -- emoji_regex = ":(drgn|neofox|wvrn)_[a-zA-Z0-9_\\-]\\+:",
+    }
 }
 ```
 
