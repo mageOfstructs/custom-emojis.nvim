@@ -38,6 +38,6 @@ This will create new 32x32 versions of all pngs in `drgn/` in the folder `drgn_3
 
 ## TODOS
 
-- [ ] set custom emoji path
+- [x] set custom emoji path
 - [ ] completion
 - [ ] fix alignment issues when combining them with text
