@@ -1,5 +1,9 @@
 # custom-emojis.nvim
 
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/mageOfStructs/custom-emojis.nvim)
+![GitHub language count](https://img.shields.io/github/languages/count/mageOfStructs/custom-emojis.nvim)
+
+
 - so you can put neofoxxos in your code :3
 
 ## Requirements
