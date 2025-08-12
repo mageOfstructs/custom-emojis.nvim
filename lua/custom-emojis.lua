@@ -1,6 +1,11 @@
 M = {}
 local cur_img_id = 0
 local imgs_ids = {}
+local extmarks = {}
+
+local plugin_ns = vim.api.nvim_create_namespace("CustomEmojis")
+vim.api.nvim_set_hl(plugin_ns, "Alignment", { blend = 100, nocombine = false })
+vim.api.nvim_set_hl_ns(plugin_ns)
 
 local function send_kgp_msg(control, payload)
   local msg = string.format("\x1B_G%s;%s\x1B\\", control, payload)
@@ -9,12 +14,18 @@ local function send_kgp_msg(control, payload)
 end
 
 local function clear_imgs()
+  for buf_id, _ in pairs(extmarks) do
+    vim.api.nvim_buf_clear_namespace(buf_id, plugin_ns, 0, -1)
+  end
+  extmarks = {}
   imgs_ids = {}
   cur_img_id = 0
   send_kgp_msg("a=d", "")
 end
 
 local function delete_img(id)
+  -- TODO: extmark
+  table.remove(imgs_ids, id)
   send_kgp_msg(string.format("a=d,d=i,i=%d", id), "")
 end
 
@@ -36,8 +47,8 @@ end
 
 -- :drgn_0_0:
 
-local plugin_ns = vim.api.nvim_create_namespace("CustomEmojis")
-vim.api.nvim_set_hl(plugin_ns, "myConceal", { link = "Conceal" })
+
+print(vim.inspect(vim.api.nvim_get_hl(plugin_ns, {name = "Alignment"})))
 
 local function render_window(win_id, opts)
   local buf_id = vim.api.nvim_win_get_buf(win_id)
@@ -51,10 +62,22 @@ local function render_window(win_id, opts)
     local text = match.text
     if string.gmatch(text, opts.emoji_regex) then
       -- print(vim.inspect({ row = match.lnum, col = match.byteidx, end_col = match.byteidx + #text }))
-      vim.api.nvim_buf_set_extmark(buf_id, plugin_ns, match.lnum - 1, match.byteidx,
-        { end_col = match.byteidx + #text, hl_group = "Conceal", strict = true, conceal = "" })
+      -- vim.api.nvim_buf_set_extmark(buf_id, plugin_ns, match.lnum - 1, match.byteidx,
+      --   { end_col = match.byteidx + #text, hl_group = "Conceal", strict = true, conceal = "" })
+      -- print(match.lnum .. "/" .. match.byteidx)
+      extmark_id = vim.api.nvim_buf_set_extmark(buf_id, plugin_ns, match.lnum - 1, match.byteidx,
+        { end_col = match.byteidx + #text-2, strict = true, virt_text_pos = "overlay", virt_text = {{"  ", "Alignment"}}, virt_text_hide = true, hl_mode = "blend", conceal = "" })
       if line_emojis_offsets[match.lnum] == nil then
         line_emojis_offsets[match.lnum] = 0
+      end
+
+      if extmarks[buf_id] == nil then
+         extmarks[buf_id] = {}
+      end
+      if extmarks[buf_id][match.lnum] == nil then
+        extmarks[buf_id][match.lnum] = { extmark_id }
+      else
+        table.insert(extmarks[buf_id][match.lnum], extmark_id) 
       end
 
       local path = opts.emoji_path .. string.sub(text, 2, #text - 1) .. ".png"
@@ -85,9 +108,30 @@ local function extract_window_ids(list, ret)
   end
 end
 
+local function getOS()
+  local osname
+  -- ask LuaJIT first
+  if jit then
+    return jit.os
+  end
+
+  -- Unix, Linux variants
+  local fh, err = assert(io.popen("uname -o 2>/dev/null", "r"))
+  if fh then
+    osname = fh:read()
+  end
+
+  return osname or "Windows"
+end
+
+
 function M.setup(opts)
   if opts.emoji_path == nil then
-    opts.emoji_path = "/home/" .. os.getenv("USER") .. "/.local/share/custom-emojis.nvim/"
+    if getOS() ~= "Windows" then
+      opts.emoji_path = "/home/" .. os.getenv("USER") .. "/.local/share/custom-emojis.nvim/"
+    else
+      opts.emoji_path = "C:\\Users\\" .. os.getenv("USERNAME") .. "\\AppData\\Local\\custom-emojis.nvim"
+    end
   end
   if opts.emoji_regex == nil then
     opts.emoji_regex = ":\\(drgn_\\|neofox_\\|wvrn\\)[a-zA-Z0-9_\\-]*:"
@@ -123,6 +167,28 @@ function M.setup(opts)
       for i = 1, #imgs_ids[win_id] do
         delete_img(imgs_ids[win_id][i])
       end
+    end,
+  })
+
+  vim.api.nvim_create_augroup("custom-emojis", {})
+  vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
+    group = "custom-emojis",
+    callback = function(ev)
+      print("asdf")
+      local win_id = vim.api.nvim_get_current_win()
+      local buf_id = vim.api.nvim_win_get_buf(win_id)
+      local cursorpos = vim.api.nvim_win_get_cursor(win_id)
+      if not extmarks[buf_id] then
+        return
+      end
+
+      local cur_extmarks = extmarks[buf_id][cursorpos[0]]
+      if cur_extmarks then
+        for _, id in ipairs(cur_extmarks) do
+          vim.api.nvim_buf_del_extmark(buf_id, plugin_ns, id)
+        end
+      end
+      return nil
     end,
   })
 end
