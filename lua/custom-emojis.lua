@@ -4,7 +4,7 @@ local imgs_ids = {}
 local extmarks = {}
 
 local plugin_ns = vim.api.nvim_create_namespace("CustomEmojis")
-vim.api.nvim_set_hl(plugin_ns, "Alignment", { blend = 100, nocombine = false })
+-- vim.api.nvim_set_hl(plugin_ns, "Alignment", { blend = 100, nocombine = false })
 vim.api.nvim_set_hl_ns(plugin_ns)
 
 local function send_kgp_msg(control, payload)
@@ -53,12 +53,8 @@ end
 
 -- :drgn_0_0:
 
--- print(vim.inspect(vim.api.nvim_get_hl(plugin_ns, { name = "Alignment" })))
-
 local function render_window(win_id, opts)
 	local buf_id = vim.api.nvim_win_get_buf(win_id)
-	local conceal_cmd = 'syntax match myConceal "' .. opts.emoji_regex .. '" conceal'
-	-- vim.cmd(conceal_cmd)
 	local first_line = vim.fn.winsaveview().topline
 	local matches =
 		vim.fn.matchbufline(buf_id, opts.emoji_regex, first_line, first_line + vim.api.nvim_win_get_height(0))
@@ -70,13 +66,11 @@ local function render_window(win_id, opts)
 			-- vim.api.nvim_buf_set_extmark(buf_id, plugin_ns, match.lnum - 1, match.byteidx,
 			--   { end_col = match.byteidx + #text, hl_group = "Conceal", strict = true, conceal = "" })
 			-- print(match.lnum .. "/" .. match.byteidx)
-			extmark_id = vim.api.nvim_buf_set_extmark(buf_id, plugin_ns, match.lnum - 1, match.byteidx, {
+			local extmark_id = vim.api.nvim_buf_set_extmark(buf_id, plugin_ns, match.lnum - 1, match.byteidx, {
 				end_col = match.byteidx + #text,
 				strict = true,
 				virt_text_pos = "inline",
-				virt_text = { { "  ", "" } },
-				virt_text_hide = true,
-				-- hl_mode = "blend",
+				virt_text = { { "   ", "" } },
 				conceal = "",
 			})
 			if line_emojis_offsets[match.lnum] == nil then
