@@ -39,6 +39,10 @@ local function restore_cursor()
 	io.write("\x1B[u")
 end
 
+local function pos_invisible(abs_pos)
+	return abs_pos.row == 0 and abs_pos.col == 0 and abs_pos.endcol == 0 and abs_pos.cursend == 0
+end
+
 function M.show_image(lines, cols, path)
 	send_kgp_msg(
 		string.format("i=%d,q=2,f=100,t=f,a=T,r=1,C=1,Y=%d,X=%d", cur_img_id, lines, cols),
@@ -96,11 +100,15 @@ local function render_window(win_id, opts)
 			imgs_ids[win_id][#imgs_ids[win_id] + 1] = cur_img_id
 
 			local abs_pos = vim.fn.screenpos(win_id, match.lnum, match.byteidx - line_emojis_offsets[match.lnum])
+			if pos_invisible(abs_pos) then
+				goto continue
+			end
 			move_cursor(abs_pos.row, abs_pos.col + 1)
 			M.show_image(0, 0, path)
 			restore_cursor()
 
 			line_emojis_offsets[match.lnum] = line_emojis_offsets[match.lnum] + #match.text - 2
+      ::continue::
 		end
 	end
 end
